@@ -1,5 +1,5 @@
 variable "ami_name" {
-
+  type = string
 }
 variable "public_subnet_1" {
   type = string
@@ -7,8 +7,8 @@ variable "public_subnet_1" {
 variable "ssh_private_key" {
   description = "Clave privada SSH generada"
   type        = string
-
 }
+
 # Web Servers
 variable "web_server_count" {
   description = "Número de instancias de servidores web"
@@ -62,20 +62,13 @@ variable "key_name" {
   type        = string
 }
 
-
-# MongoDB
-variable "mongodb_ami" {
-  description = "AMI para MongoDB"
+# Nuevas variables para las AMIs generadas por Packer
+variable "ean_ami_id" {
+  description = "ID de la AMI para el servidor web (Express/Angular/Nginx)."
   type        = string
 }
 
-
-
-
-
-
-
-
-
-
-
+variable "mongodb_ami_id" {
+  description = "ID de la AMI para el servidor de base de datos (MongoDB)."
+  type        = string
+}

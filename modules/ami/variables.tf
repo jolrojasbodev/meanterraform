@@ -17,4 +17,12 @@ variable "ami_name2" {
   type        = string
 }
 
+variable "ean_ami_id" {
+  description = "ID de la AMI para el servidor web (Express/Angular/Nginx)."
+  type        = string
+}
 
+variable "mongodb_ami_id" {
+  description = "ID de la AMI para el servidor de base de datos (MongoDB)."
+  type        = string
+}

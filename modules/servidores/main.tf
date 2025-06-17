@@ -1,36 +1,8 @@
-# Terraform Data Block - To Lookup Latest Ubuntu 20.04 AMI Image
-
-
-data "aws_ami" "nginx-nodejs" {
-  most_recent = true
-  filter {
-    name   = "name"
-    values = ["ami-nodenginx"]
-  }
-  filter {
-    name   = "virtualization-type"
-    values = ["hvm"]
-  }
-  owners = ["self"]
-}
-
-data "aws_ami" "mongodb" {
-  most_recent = true
-  filter {
-    name   = "name"
-    values = ["ami-mongodb"]
-  }
-  filter {
-    name   = "virtualization-type"
-    values = ["hvm"]
-  }
-  owners = ["self"]
-}
 # Elastic Network Interfaces (ENI) para Web Servers
 resource "aws_network_interface" "web_server_eni_1" {
   count           = var.web_server_count
   subnet_id       = var.web_server_subnet_id_1
-  private_ips     = [var.webserver_1_private_ip] # Asigna una IP única a cada ENI
+  private_ips     = [var.webserver_1_private_ip]
   security_groups = [var.security_group_ids]
 
   tags = {
@@ -41,7 +13,7 @@ resource "aws_network_interface" "web_server_eni_1" {
 resource "aws_network_interface" "web_server_eni_2" {
   count           = var.web_server_count
   subnet_id       = var.web_server_subnet_id_2
-  private_ips     = [var.webserver_2_private_ip] # Asigna una IP única a cada ENI
+  private_ips     = [var.webserver_2_private_ip]
   security_groups = [var.security_group_ids]
 
   tags = {
@@ -51,7 +23,7 @@ resource "aws_network_interface" "web_server_eni_2" {
 
 
 resource "aws_eip" "web_server_eip_1" {
-  count             = var.web_server_count
+  count           = var.web_server_count
   network_interface = aws_network_interface.web_server_eni_1[count.index].id
 
   tags = {
@@ -59,7 +31,7 @@ resource "aws_eip" "web_server_eip_1" {
   }
 }
 resource "aws_eip" "web_server_eip_2" {
-  count             = var.web_server_count
+  count           = var.web_server_count
   network_interface = aws_network_interface.web_server_eni_2[count.index].id
 
   tags = {
@@ -79,62 +51,74 @@ resource "aws_network_interface" "mongodb_eni" {
 }
 
 
-
 # Terraform Resource Block - To Build EC2 instance in Public Subnet
 resource "aws_instance" "web_server_1" {
-  ami           = data.aws_ami.nginx-nodejs.id
+  ami           = var.ean_ami_id
   instance_type = "t2.micro"
   key_name      = var.key_name
 
   network_interface {
     network_interface_id = aws_network_interface.web_server_eni_1[0].id
     device_index         = 0
-
   }
-
 
   tags = {
     Name = "nginx-nodejs"
   }
+
+  user_data = <<-EOF
+              #!/bin/bash
+              echo "MONGO_DB_HOST=${aws_instance.mongodb.private_ip}" >> /etc/environment
+              . /etc/environment
+              EOF
+
+  depends_on = [
+    aws_instance.mongodb
+  ]
+
   connection {
     type        = "ssh"
     user        = "ubuntu"
     private_key = var.ssh_private_key
-    host        = aws_eip.web_server_eip_1[count.index].public_ip
+    host        = aws_eip.web_server_eip_1[0].public_ip
   }
-
 }
+
 resource "aws_instance" "web_server_2" {
-  ami           = data.aws_ami.nginx-nodejs.id
+  ami           = var.ean_ami_id
   instance_type = "t2.micro"
   key_name      = var.key_name
 
   network_interface {
     network_interface_id = aws_network_interface.web_server_eni_2[0].id
     device_index         = 0
-
   }
-
 
   tags = {
     Name = "nginx-nodejs"
   }
+
+  user_data = <<-EOF
+              #!/bin/bash
+              echo "MONGO_DB_HOST=${aws_instance.mongodb.private_ip}" >> /etc/environment
+              . /etc/environment
+              EOF
+
+  depends_on = [
+    aws_instance.mongodb
+  ]
+
   connection {
     type        = "ssh"
     user        = "ubuntu"
     private_key = var.ssh_private_key
-    host        = aws_eip.web_server_eip_2[count.index].public_ip
+    host        = aws_eip.web_server_eip_2[0].public_ip
   }
-
 }
 
 # Creacion de MongoDB
-
-# Terraform Data Block - To Lookup Latest Ubuntu 20.04 AMI Image
-
-# Instancia EC2 para MongoDB
 resource "aws_instance" "mongodb" {
-  ami           = data.aws_ami.mongodb.id
+  ami           = var.mongodb_ami_id
   instance_type = "t2.micro"
   key_name      = var.key_name
 
@@ -146,8 +130,4 @@ resource "aws_instance" "mongodb" {
   tags = {
     Name = "MongoDB-Instance"
   }
-
-
-
-
 }

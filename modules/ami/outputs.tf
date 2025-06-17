@@ -1,14 +1,11 @@
-output "ami_id" {
-  value       = data.aws_ami.latest_ami.id
-  description = "ID de la última AMI creada por Packer"
+# modules/ami/outputs.tf
+
+output "ean_ami_id" {
+  value       = data.local_file.ean_ami_id.content
+  description = "ID de la AMI del servidor web (Nginx/Node.js/Express)"
 }
 
-output "ami_name" {
-  value       = data.aws_ami.latest_ami.name
-  description = "Nombre de la última AMI creada por Packer"
-}
-
-output "ami_name2" {
-  value       = data.aws_ami.mongodb_ami.id
-  description = "Nombre de la última AMI creada por Packer"
+output "mongodb_ami_id" {
+  value       = data.local_file.mongo_ami_id.content
+  description = "ID de la AMI de MongoDB"
 }
